@@ -50,7 +50,7 @@ It goes as follows : ~With probability (1-epsilon) choose the action which has t
 class QLearning:
     def __init__(self):
         self.env = WindyGridworldEnv()
-        # self.env.render()
+        self.env.render()
         self.QFunction = defaultdict(lambda: np.zeros(self.env.action_space.n))
         self.epsilon = 0.1
         self.episodesAmount = 1000
@@ -88,7 +88,7 @@ class QLearning:
                 # done - boolean, to show if agent reached destination (won),
                 # last(skipped) parameter is probability(1.0 by default)
                 nextState, reward, done, _ = self.env.step(action)
-
+                self.env.render()
                 self.stats.episode_rewards[episode] += reward
                 self.stats.episode_lengths[episode] = i
                 bestNextAction = np.argmax(self.QFunction[nextState])
