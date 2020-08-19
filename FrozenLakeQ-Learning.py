@@ -46,56 +46,65 @@ It goes as follows:
 With probability (1 - ϵ) choose the action which has the highest Q-value.
 With probability (ϵ) choose any action at random."""
 
-env = FrozenLakeEnv()
-env.render()
-qTable = np.zeros((env.observation_space.n, env.action_space.n))
-episodesAmount = 1000
-alpha = 0.9
-gamma = 0.9
-epsilon = 1.0
-epsilonDecay = 0.99
-epsilonMin = 0.01
-epsilonMax = 1.0
-decay = 0.006
-stepsMax = 100
-action = env.action_space.sample()
-rewards = []
-steps = []
-stats = plotting.EpisodeStats(episode_lengths=np.zeros(episodesAmount), episode_rewards=np.zeros(episodesAmount))
+
+class FrozenLakeQLearning:
+    def __init__(self):
+        self.mapSize = "4x4"
+        self.slippery = True
+        self.env = FrozenLakeEnv(map_name=self.mapSize, is_slippery=self.slippery)
+        self.qTable = np.zeros((self.env.observation_space.n, self.env.action_space.n))
+        self.episodesAmount = 1000
+        self.alpha = 0.9
+        self.gamma = 0.9
+        self.epsilon = 0.9
+        self.epsilonDecay = 0.99
+        self.epsilonMin = 0.01
+        self.epsilonMax = 1.0
+        self.decay = 0.01
+        self.stepsMax = 100
+        self.action = self.env.action_space.sample()
+        self.rewards = []
+        self.steps = []
+        self.stats = plotting.EpisodeStats(episode_lengths=np.zeros(self.episodesAmount),
+                                           episode_rewards=np.zeros(self.episodesAmount))
+        self.qLearning()
+
+    def qLearning(self):
+        for i in range(self.episodesAmount):
+            state = self.env.reset()
+            totalReward = 0
+            step = 0
+
+            for step in range(self.stepsMax):
+                randomEpsilon = random.uniform(0, 1)
+
+                if randomEpsilon > self.epsilon:
+                    action = np.argmax(self.qTable[state])
+                else:
+                    action = self.env.action_space.sample()
+
+                # Step format is: (1, 0.0, False, {'prob': 0.3333333333333333})
+                newState, reward, done, probability = self.env.step(action)
+
+                self.qTable[state, action] = self.qTable[state, action] + self.alpha * (reward + self.gamma * np.max(self.qTable[newState, :]) - self.qTable[state, action])
+
+                self.stats.episode_rewards[i] += reward
+                totalReward += reward
+                self.stats.episode_lengths[i] = step
+
+                state = newState
+
+                if done:
+                    if i % 10 == 0:
+                        print(f"Episode: {i} Reward: {reward} Steps Taken: {step}")
+                    break
+
+            self.epsilon = self.epsilonMin + self.epsilonDecay * np.exp(-self.decay * i)
+
+            self.rewards.append(totalReward)
+            self.steps.append(step)
+        print("Score over time: " + str(sum(self.rewards) / self.episodesAmount))
+        plotting.plot_episode_stats(self.stats)
 
 
-for i in range(episodesAmount):
-    state = env.reset()
-    totalReward = 0
-    step = 0
-
-    for step in range(stepsMax):
-        randomEpsilon = random.uniform(0, 1)
-        if randomEpsilon > epsilon:
-            action = np.argmax(qTable[state])
-        else:
-            action = env.action_space.sample()
-
-        # Step format is: (1, 0.0, False, {'prob': 0.3333333333333333})
-        newState, reward, done, probability = env.step(action)
-
-        qTable[state][action] = qTable[state][action] + alpha * (reward + gamma * np.max(qTable[newState]) - qTable[state][action])
-
-        stats.episode_rewards[i] += reward
-        stats.episode_lengths[i] = step
-
-        state = newState
-
-        if done:
-            if i % 10 == 0:
-                print(f"Episode: {i} Reward: {reward} Steps Taken: {step}")
-            break
-
-    epsilon = epsilonMin + epsilonDecay * np.exp(-decay * i)
-
-    rewards.append(totalReward)
-    steps.append(step)
-
-plotting.plot_episode_stats(stats)
-print("Score over time: " + str(sum(rewards)/episodesAmount))
-print(qTable)
+FrozenLakeQLearning()

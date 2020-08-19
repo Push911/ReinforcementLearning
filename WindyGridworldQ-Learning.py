@@ -19,7 +19,7 @@ matplotlib.style.use("seaborn")
     states that means there are no further transition possible. This is said to be the completion of an episode.
 3.  Temporal Difference or TD-Update:
         The Temporal Difference or TD-Update rule can be represented as follows :
-        Q(S, A) <- Q(S, A) + alpha(R + gamma * Q(S', A') - Q(S, A)
+        Q(S, A) <- Q(S, A) + alpha(R + gamma * Q(S', A') - Q(S, A))
 
 
 This update rule to estimate the value of Q is applied at every time step of the agents interaction with the 
